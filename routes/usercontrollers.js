@@ -1,14 +1,38 @@
-exports.getuser = (req,res)=>{
-    res.json ({name:"maryam", age :22})
-}
-exports.createuser = (req,res)=>{
-    res.sen ("کاربر ایجاد شد ")
-}
+const fs = require("fs");
+const path = require("path");
+const usersPath = path.join(__dirname, "../data/users.json");
+const getUsers = (req, res) => {
+    const users = JSON.parse(fs.readFileSync(usersPath));
+    res.json(users);
+};
 
-exports.updateuser = (req,res)=>{
-    res.send("کاربر ویرایش شد ")
-}
+const addUser = (req, res) => {
+    const users = JSON.parse(fs.readFileSync(usersPath));
+    const newUser = { id: Date.now(), ...req.body };
+    users.push(newUser);
+    fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
+    res.status(201).json(newUser);
+};
 
-exports.deleteuser = (req,res)=>{
-    res.send ("کاربر حذف شد ")
-}
+const updateUser = (req, res) => {
+    const users = JSON.parse(fs.readFileSync(usersPath));
+    const id = parseInt(req.params.id);
+    const index = users.findIndex(u => u.id === id);
+    if (index !== -1) {
+        users[index] = { ...users[index], ...req.body };
+        fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
+        res.json(users[index]);
+    } else {
+        res.status(404).json({ message: "کاربر پیدا نشد" });
+    }
+};
+
+const deleteUser = (req, res) => {
+    let users = JSON.parse(fs.readFileSync(usersPath));
+    const id = parseInt(req.params.id);
+    users = users.filter(u => u.id !== id);
+    fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
+    res.json({ message: "کاربر حذف شد" });
+};
+
+module.exports = { getUsers, addUser, updateUser, deleteUser };
